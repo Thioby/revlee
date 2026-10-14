@@ -263,3 +263,15 @@ Public evidence is thin and mostly vendor-authored; the concrete data points are
 - No Hacker News or Reddit threads specific to agent-device, e2e, mobile-mcp, mobilerun, Midscene or Maestro MCP were found (HN search returned unrelated threads; Reddit blocked to the search tool).
 - Slack and TestMu posts could not be opened; figures are from search snippets only.
 - No published cost-per-run data for e2e, agent-device, mobilerun, or Midscene mobile flows beyond Midscene's AppControlBench "$0.59 total" claim.
+
+---
+
+## Addendum (2026-10-14, coordinator) — agent-device docs read from `website/docs/docs/*.md` on GitHub
+
+Source: https://raw.githubusercontent.com/callstack/agent-device/main/website/docs/docs/agent-setup.md and `.../replay-e2e.md` (the public site agent-device.dev / oss.callstack.com was DNS-blocked in this sandbox).
+
+- Setup for coding agents: `npm install -g agent-device@latest`; skills `npx skills add callstack/agent-device`; Claude Code MCP: `claude mcp add --transport stdio --scope user agent-device -- agent-device mcp`; Cursor `.cursor/mcp.json` with `{"command":"agent-device","args":["mcp"]}`; pin a reviewed version via `npx -y agent-device@<version> mcp`. MCP server "exposes installed CLI commands as structured tools" plus an MCP-only `help` tool; tool names are not enumerated in docs ("check the server's tool list after connecting"). `web setup`/`web doctor` are CLI-only. The MCP server does not run arbitrary shell commands. Check `isError: true` in tool results.
+- Session loop recommended: `open -> snapshot -i -> act -> re-snapshot -> verify -> close`; mutating commands serial per session; refs `@e3` for exploration, selectors for durable replay.
+- Replay: `agent-device open <app> --platform ios --session e2e --save-script [path]` writes `~/.agent-device/sessions/<session>-<timestamp>.ad` on close (rejected on remote daemon). `.ad` grammar: one command per line, `context platform=android`, `env KEY=VALUE`, `${VAR}` substitution with precedence CLI `-e` > shell `AD_VAR_*` > script `env` > built-ins (`AD_PLATFORM, AD_SESSION, AD_FILENAME, AD_DEVICE, AD_ARTIFACTS`), fallbacks `${WAIT_MS:-500}`; selectors like `id="far-button"`, `label="Order summary"`; `scroll down --until '<selector>'`; `wait '<selector>' 5000`.
+- `agent-device replay <file> --session <s> [--keep-session]`; press/click/longpress wait up to 2 s for target; failures: `REPLAY_DIVERGENCE` (with `readiness`, `divergence.kind: selector-miss`, `selector_not_found`, `capture_sparse`), `AMBIGUOUS_MATCH`, `IDENTITY_UNVERIFIABLE`; resume `--from <n> --plan-digest <sha>` (replay only). `--update` accepted but no-op (scripts never rewritten automatically).
+- `agent-device test <files|dir|glob> [--platform] [--timeout ms] [--retries ≤3] [--artifacts-dir] [--reporter default|junit:<path>] [-e KEY=VALUE]`; per-file `context timeout=/retries=`; artifacts `.agent-device/test-artifacts/<run-id>/` with `replay.ad`, `result.txt`, `replay-timing.ndjson` per attempt; custom JS reporters.
