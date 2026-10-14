@@ -1,0 +1,46 @@
+# Krok 2/2 dla PR-ów z forków: weryfikacja w kontekście gałęzi bazowej (sekrety),
+# tylko po `/verify` od osoby z write access. Kod forka NIE jest checkoutowany.
+name: revlee-verify
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  actions: read
+  id-token: write
+jobs:
+  verify:
+    if: >
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/verify') &&
+      contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: [self-hosted, linux, kvm, revlee, ephemeral]
+    timeout-minutes: 25
+    concurrency:
+      group: revlee-${{ github.event.issue.number }}-android
+      cancel-in-progress: true
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+      E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
+      REVLEE_S3_ACCESS_KEY: ${{ secrets.REVLEE_S3_ACCESS_KEY }}
+      REVLEE_S3_SECRET_KEY: ${{ secrets.REVLEE_S3_SECRET_KEY }}
+      REVLEE_APP_ID: ${{ vars.REVLEE_APP_ID }}
+      REVLEE_APP_PRIVATE_KEY: ${{ secrets.REVLEE_APP_PRIVATE_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6        # gałąź bazowa: konfiguracja security/budget
+      - name: Fetch fork build artifact matching current PR head
+        run: npx -y @revlee/cli@1 artifact fetch --pr ${{ github.event.issue.number }} --platform android --workflow revlee-build --out build/
+      - name: Verify
+        run: npx -y @revlee/cli@1 verify --pr ${{ github.event.issue.number }} --platform android --artifact build/app.apk --no-persist-map
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: revlee-android-fork-${{ github.event.issue.number }}
+          path: .revlee-run/
+          retention-days: 14
+          compression-level: 0

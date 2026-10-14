@@ -1,0 +1,30 @@
+# Krok 1/2 dla PR-ów z forków: build BEZ sekretów na ephemeral runnerze.
+name: revlee-build
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [android, ios]
+    runs-on: ${{ matrix.platform == 'ios' && fromJson('["self-hosted","macos","revlee","ephemeral"]') || fromJson('["self-hosted","linux","kvm","revlee","ephemeral"]') }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Build (Debug / simulator)
+        run: npx -y @revlee/cli@1 build --platform ${{ matrix.platform }} --out build/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: revlee-build-${{ matrix.platform }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            build/app.apk
+            build/App.app.zip
+            build/build.json
+          retention-days: 7
+          compression-level: 0

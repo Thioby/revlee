@@ -1,0 +1,64 @@
+# Wariant prosty: zaufane PR-y z tego samego repozytorium (sekrety dostępne).
+# Fork PR-y są pomijane przez `revlee gate` (triggers.forks: manual) i obsługiwane
+# przez revlee-build.yml + revlee-verify.yml.
+name: revlee
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  actions: write
+  issues: read
+  id-token: write
+concurrency:
+  group: revlee-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.g.outputs.run }}
+      platforms: ${{ steps.g.outputs.platforms }}
+      pr: ${{ steps.g.outputs.pr }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: g
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: npx -y @revlee/cli@1 gate --event "$GITHUB_EVENT_PATH" >> "$GITHUB_OUTPUT"
+  verify:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ${{ fromJson(needs.gate.outputs.platforms) }}
+    runs-on: ${{ matrix.platform == 'ios' && fromJson('["self-hosted","macos","revlee"]') || fromJson('["self-hosted","linux","kvm","revlee"]') }}
+    timeout-minutes: 25
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+      E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
+      REVLEE_S3_ACCESS_KEY: ${{ secrets.REVLEE_S3_ACCESS_KEY }}
+      REVLEE_S3_SECRET_KEY: ${{ secrets.REVLEE_S3_SECRET_KEY }}
+      REVLEE_APP_ID: ${{ vars.REVLEE_APP_ID }}
+      REVLEE_APP_PRIVATE_KEY: ${{ secrets.REVLEE_APP_PRIVATE_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Verify PR on device
+        run: npx -y @revlee/cli@1 verify --pr ${{ needs.gate.outputs.pr }} --platform ${{ matrix.platform }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: revlee-${{ matrix.platform }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .revlee-run/
+          retention-days: 14
+          compression-level: 0

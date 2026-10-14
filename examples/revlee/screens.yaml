@@ -1,0 +1,29 @@
+screens:
+  - id: home
+    title_pattern: "^(Home|Start)"
+    files: ["apps/mobile/src/screens/HomeScreen.tsx"]
+    routes: ["Home"]
+    entry: []
+  - id: products
+    files: ["apps/mobile/src/screens/ProductsScreen.tsx"]
+    routes: ["Products"]
+    entry: ["tap:tab Products"]
+  - id: product
+    title_pattern: "^(Produkt|Product)"
+    files: ["apps/mobile/src/screens/ProductScreen.tsx", "apps/mobile/src/components/AddToCart*.tsx"]
+    routes: ["Product"]
+    entry: ["tap:tab Products", "tap:first product card"]
+  - id: cart
+    files: ["apps/mobile/src/screens/CartScreen.tsx"]
+    routes: ["Cart"]
+    entry: ["tap:tab Cart"]
+  - id: profile
+    files: ["apps/mobile/src/screens/ProfileScreen.tsx"]
+    routes: ["Profile"]
+    entry: ["tap:tab Profile"]
+shared:
+  - files: ["apps/mobile/src/theme.ts", "packages/ui/**"]
+    blast_radius: shared_component
+    smoke_screens: ["home", "product", "cart"]
+  - files: ["apps/mobile/src/navigation/**"]
+    blast_radius: layout

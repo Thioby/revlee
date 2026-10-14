@@ -1,0 +1,55 @@
+# Minimalna konfiguracja startowa (Expo/React Native + Jira). Pełny schemat: docs/12-konfiguracja-cli-ux.md
+version: 1
+project:
+  name: acme-shop
+  platforms: [android, ios]
+triggers:
+  paths: ["apps/mobile/**", "packages/ui/**"]
+  skip_if_only: ["**/*.test.*", "docs/**", "**/*.md", ".github/**", "**/*.lock"]
+  labels: ["!skip-verify"]
+  drafts: false
+  forks: manual
+context:
+  issue_tracker:
+    kind: jira
+    jira: { base_url: https://acme.atlassian.net, project_keys: [SHOP], ac_field: customfield_10042 }
+  link_patterns: ["SHOP-\\d+", "Closes #(\\d+)"]
+  playbook: .revlee/playbook.md
+  screens: .revlee/screens.yaml
+builds:
+  android:
+    command: "cd apps/mobile && npx expo prebuild -p android --no-install && cd android && ./gradlew :app:assembleDebug --build-cache"
+    artifact: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+    package: com.acme.shop
+  ios:
+    command: "cd apps/mobile && npx expo run:ios --configuration Debug --device generic --no-bundler --output build/ios"
+    artifact: apps/mobile/build/ios/AcmeShop.app
+    bundle_id: com.acme.shop
+  base: { source: artifact-cache }
+  reuse_native_when_js_only: true
+app:
+  auth_bypass: { deep_link: "acme://e2e/auth?token=${E2E_TOKEN}" }
+  permissions: [notifications]
+  reset_between_scenarios: deep_link
+  network: { mode: allowlist, allowed_hosts: ["api-test.acme.dev", "cdn.acme.dev"] }
+devices:
+  android: { api: 35, image: google_apis, arch: x86_64, profile: pixel_7, locale: pl-PL }
+  ios: { model: "iPhone 17", runtime: "iOS-27-0", locale: pl-PL }
+verification:
+  always_verify:
+    - "Aplikacja startuje do ekranu Home bez crasha"
+  base_comparison: true
+  max_scenarios: 8
+oracles:
+  judge: { votes: 3, require_unanimous: true, models: [anthropic/claude-sonnet-5-5, anthropic/claude-sonnet-5-5, openai/gpt-5-4] }
+  visual_diff: { tool: odiff, threshold_pct: 0.1 }
+models:
+  planner: anthropic/claude-sonnet-5-5
+  executor: anthropic/claude-sonnet-5-5
+budget: { max_usd: 5, max_turns: 80, max_minutes: 15, per_pr_daily_max_usd: 20 }
+report:
+  check_run: { enabled: true, gating: neutral }
+  evidence: { store: s3, bucket: acme-revlee-evidence, public_base_url: https://evidence.acme.dev, retention_days: 30 }
+security:
+  deny_actions: ["zapłać", "pay", "usuń konto", "delete account"]
+  allowed_link_schemes: ["acme://"]

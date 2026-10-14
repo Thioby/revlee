@@ -1,0 +1,9 @@
+# Regiony pomijane w diffie pikselowym base vs PR (współrzędne względne 0–1 lub selektory a11y)
+global:
+  - { name: status-bar, rect: [0, 0, 1, 0.05] }
+  - { name: clock-or-dynamic-text, selector: 'role=text name~="\\d{1,2}:\\d{2}"' }
+screens:
+  home:
+    - { name: promo-banner, test_id: promo-banner }
+  product:
+    - { name: stock-counter, test_id: stock-count }
