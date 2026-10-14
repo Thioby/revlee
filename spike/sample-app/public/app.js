@@ -31,11 +31,11 @@
     badge.textContent = String(state.cart.length);
     if (state.tab === "home") {
       title.textContent = "Home";
-      main.innerHTML = `<p>Witaj w Acme Shop.</p><p data-testid="promo-banner">Promocja dnia: -10% na chrząszcze</p>`;
+      main.innerHTML = `<p>Welcome to Acme Shop.</p><p data-testid="promo-banner">Deal of the day: 10% off beetles</p>`;
     } else if (state.tab === "products") {
       title.textContent = "Products";
       main.innerHTML = products
-        .map((p) => `<div class="card" role="button" tabindex="0" data-product="${p.id}" data-testid="product-card-${p.id}" aria-label="${p.name}, ${p.price} zł"><strong>${p.name}</strong><div class="price">${p.price} zł</div></div>`)
+        .map((p) => `<div class="card" role="button" tabindex="0" data-product="${p.id}" data-testid="product-card-${p.id}" aria-label="${p.name}, ${p.price} PLN"><strong>${p.name}</strong><div class="price">${p.price} PLN</div></div>`)
         .join("");
       main.querySelectorAll("[data-product]").forEach((el) =>
         el.addEventListener("click", () => { state.product = products.find((p) => p.id === Number(el.dataset.product)); state.tab = "product"; render(); }),
@@ -43,24 +43,24 @@
     } else if (state.tab === "product" && state.product) {
       const p = state.product;
       title.textContent = "Product";
-      main.innerHTML = `<h2 data-testid="product-name">${p.name}</h2><p class="price" data-testid="product-price">${p.price} zł</p><p>Opis produktu ${p.name}.</p>
-        <button class="cta" data-testid="add-to-cart">Dodaj do koszyka</button>`;
+      main.innerHTML = `<h2 data-testid="product-name">${p.name}</h2><p class="price" data-testid="product-price">${p.price} PLN</p><p>Description of ${p.name}.</p>
+        <button class="cta" data-testid="add-to-cart">Add to cart</button>`;
       main.querySelector('[data-testid="add-to-cart"]').addEventListener("click", () => {
         const added = hasBug("toast-name") ? products[1] : p; // bug: wrong product
         state.cart.push(hasBug("badge") ? null : added);
         if (hasBug("badge")) state.cart.pop();
-        if (variant !== "base") showToast(`Dodano: ${added.name}`);
+        if (variant !== "base") showToast(`Added: ${added.name}`);
         render();
       });
     } else if (state.tab === "cart") {
       title.textContent = "Cart";
       main.innerHTML = state.cart.length
-        ? state.cart.map((p, i) => `<div class="card"><strong>${p.name}</strong> <span class="price">${p.price} zł</span> <button class="danger" data-remove="${i}">Usuń</button></div>`).join("")
-        : `<p data-testid="cart-empty">Koszyk jest pusty.</p>`;
+        ? state.cart.map((p, i) => `<div class="card"><strong>${p.name}</strong> <span class="price">${p.price} PLN</span> <button class="danger" data-remove="${i}">Remove</button></div>`).join("")
+        : `<p data-testid="cart-empty">Your cart is empty.</p>`;
       main.querySelectorAll("[data-remove]").forEach((el) => el.addEventListener("click", () => { state.cart.splice(Number(el.dataset.remove), 1); render(); }));
     } else {
       title.textContent = "Profile";
-      main.innerHTML = `<p>Użytkownik testowy</p><button class="danger" data-testid="delete-account">Usuń konto</button>`;
+      main.innerHTML = `<p>Test user</p><button class="danger" data-testid="delete-account">Delete account</button>`;
     }
   }
   document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => { state.tab = b.dataset.tab; render(); }));

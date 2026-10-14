@@ -1,47 +1,47 @@
-# Revlee spike (faza 0)
+# Revlee spike (phase 0)
 
-Minimalna, działająca pętla z [docs/04](../docs/04-przeplyw-pr-do-werdyktu.md): **kontekst PR + ticket → plan → agent na urządzeniu → replay na buildzie bazowym → orakula i sędzia → raport**. Celem spike'a jest zmierzyć koszt i trafność, zanim powstanie MVP.
+A minimal, working version of the loop from [docs/04](../docs/04-flow-pr-to-verdict.md): **PR + ticket context → plan → agent on a device → replay on the base build → oracles and judge → report**. The goal of the spike is to measure cost and accuracy before the MVP is built.
 
 ```
 src/
-  types.ts            schematy (TaskContext, VerificationPlan, Observation, werdykty)
-  context.ts          wczytanie kontekstu + prosty Impact Analyzer (pliki → ekrany)
-  planner.ts          Planner LLM (structured output) + deterministyczny walidator planu
-  executor.ts         Executor: pętla tool-use (observe/tap/type/wait_for/note_expectation/step_done),
-                      executor mock (bez LLM) i replay scenariusza na buildzie base
-  judge.ts            orakula: a11y_assert, diff pikselowy base vs PR (pixelmatch), sędzia VLM z głosowaniem,
-                      kontrole negatywne, agregacja werdyktów
-  report.ts           report.md (format komentarza PR), verdicts.json, junit.xml, actions.ndjson
-  device/types.ts     interfejs DeviceAdapter + fingerprint ekranu
-  device/agentDevice.ts  adapter na CLI agent-device (iOS / Android / web)
-  device/playwright.ts   adapter web na Playwright (snapshot a11y w formacie agent-device)
-sample-app/           aplikacja testowa "Acme Shop" z wariantami: ?variant=pr|base, &bug=toast-name|badge|color|theme-leak
-fixtures/pr88/        TaskContext (PR + ticket SHOP-412 z 3 AC) i gotowy plan dla trybu mock
-bench/run.sh          mikro-benchmark: 4 warianty → macierz werdyktów
+  types.ts            schemas (TaskContext, VerificationPlan, Observation, verdicts)
+  context.ts          context loading + a simple Impact Analyzer (files → screens)
+  planner.ts          LLM Planner (structured output) + deterministic plan validator
+  executor.ts         Executor: tool-use loop (observe/tap/type/wait_for/note_expectation/step_done),
+                      a mock executor (no LLM) and scenario replay on the base build
+  judge.ts            oracles: a11y_assert, pixel diff base vs PR (pixelmatch), VLM judge with voting,
+                      negative controls, verdict aggregation
+  report.ts           report.md (PR comment layout), verdicts.json, junit.xml, actions.ndjson
+  device/types.ts     DeviceAdapter interface + screen fingerprint
+  device/agentDevice.ts  adapter over the agent-device CLI (iOS / Android / web)
+  device/playwright.ts   web adapter on Playwright (a11y snapshot in agent-device format)
+sample-app/           test app "Acme Shop" with variants: ?variant=pr|base, &bug=toast-name|badge|color|theme-leak
+fixtures/pr88/        TaskContext (PR + ticket SHOP-412 with 3 AC) and a ready-made plan for mock mode
+bench/run.sh          micro-benchmark: 4 variants → verdict matrix
 ```
 
-## Uruchomienie bez modelu (tryb `mock`)
+## Running without a model (`mock` mode)
 
 ```bash
 cd spike && npm install && npm run build
-bash bench/run.sh            # start sample-app + 4 runy + macierz werdyktów
+bash bench/run.sh            # starts sample-app, runs 4 verifications, prints the verdict matrix
 ```
 
-Oczekiwany wynik (zmierzony 14.10.2026 w sandboxie Linux, Playwright/Chromium):
+Expected result (measured 2026-10-14 in a Linux sandbox, Playwright/Chromium):
 
-| wariant | oczekiwane | werdykt | padające AC |
+| variant | expected | verdict | failing AC |
 |---|---|---|---|
 | good | ready | ready | — |
-| bug-toast (toast pokazuje zły produkt) | failed | failed | AC2 |
-| bug-badge (licznik nie rośnie) | failed | failed | AC3 |
-| bug-color (CTA zostaje niebieski) | failed | failed | AC1 |
+| bug-toast (toast names the wrong product) | failed | failed | AC2 |
+| bug-badge (counter does not increase) | failed | failed | AC3 |
+| bug-color (CTA stays blue) | failed | failed | AC1 |
 
-W trybie mock: plan jest wczytywany z pliku, executor jest regułowy (dopasowuje cytowane nazwy z kroków do snapshotu a11y), a kryterium wizualne AC1 rozstrzyga wyłącznie diff pikselowy względem buildu bazowego. Czas pojedynczego runu z porównaniem base: ~12 s.
+In mock mode the plan is loaded from a file, the executor is rule-based (it matches quoted names from the steps against the a11y snapshot), and the visual criterion AC1 is decided solely by the pixel diff against the base build. One run including the base comparison takes about 12 s.
 
-## Uruchomienie z modelem
+## Running with a model
 
 ```bash
-export ANTHROPIC_API_KEY=...          # albo `ant auth login`
+export ANTHROPIC_API_KEY=...          # or `ant auth login`
 node sample-app/server.mjs 3077 &
 node dist/cli.js verify \
   --context fixtures/pr88/task_context.json \
@@ -51,36 +51,36 @@ node dist/cli.js verify \
 bash bench/run.sh --model claude-opus-5-5
 ```
 
-- Planner: `messages.parse` ze schematem zod (`VerificationPlan`), effort `high`; walidator odrzuca plan bez `source_ref`, bez pokrycia AC, z refami/współrzędnymi w krokach.
-- Executor: manualna pętla tool-use na `client.beta.messages` z `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`), effort `medium`, obowiązkowe `note_expectation` przed akcją mutującą, maks. 2 obrazy w kontekście (starsze usuwane), budżety `--max-usd` / `--max-turns`.
-- Sędzia: `messages.parse` z rubryką, N głosów, widzi tylko obserwacje (screenshoty + drzewa a11y, obraz A/B/C: przed, po, base). `pass` tylko przy jednomyślności.
-- Model domyślny: `claude-opus-5-5` dla wszystkich ról (`--model`, `REVLEE_MODEL`); docelowo osobne modele per rola (docs/12).
+- Planner: `messages.parse` with a zod schema (`VerificationPlan`), effort `high`; the validator rejects plans without `source_ref`, without AC coverage, or with refs/coordinates in steps.
+- Executor: manual tool-use loop on `client.beta.messages` with `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`), effort `medium`, mandatory `note_expectation` before every mutating action, at most 2 images kept in context (older ones are removed), `--max-usd` / `--max-turns` budgets.
+- Judge: `messages.parse` with a rubric, N votes, sees only observations (screenshots + a11y trees; images A/B/C: before, after, base). `pass` only when unanimous.
+- Default model: `claude-opus-5-5` for every role (`--model`, `REVLEE_MODEL`); the target design uses separate models per role (docs/12).
 
-> Tryb z modelem nie został uruchomiony w sandboxie (brak klucza API). Kod kompiluje się z typami SDK 0.133, ale pierwsze uruchomienie z kluczem należy traktować jako test.
+> Model mode was not executed in the sandbox (no API key available). The code compiles against SDK 0.133 types, but the first run with a key should be treated as a test.
 
 ## agent-device (iOS / Android)
 
 ```bash
 npm i -g agent-device@0.21.27
-# iOS Simulator (Mac z Xcode): zbuduj .app, zainstaluj, potem:
+# iOS Simulator (Mac with Xcode): build the .app, install it, then:
 node dist/cli.js verify --context fixtures/pr88/task_context.json --platform ios --adapter agent-device \
   --url com.acme.shop --base-url com.acme.shop.base --device <UDID> --model mock --plan fixtures/pr88/plan.mock.json
 # Android emulator:
 node dist/cli.js verify ... --platform android --url com.acme.shop --device emulator-5554
 ```
 
-Adapter `agentDevice.ts` używa `open --relaunch --foreground`, `snapshot -i --force-full --json`, `press/fill/scroll --settle`, `wait text|absent`, `screenshot <path>`, `close`, zawsze z `--session` i `--platform`. Parsuje JSON (`data.nodes`) lub tekstowe linie `@e12 [button] label="..."`. Gramatyka zweryfikowana przez `agent-device help <cmd>` (0.21.27); **sterowanie realnym symulatorem/emulatorem nie było testowane w sandboxie** (brak Xcode/KVM). Backend web agent-device wymaga Node ≥ 24 i pobrania Chromium z googlechromelabs (zablokowane w sandboxie), stąd adapter Playwright dla web.
+The `agentDevice.ts` adapter uses `open --relaunch --foreground`, `snapshot -i --force-full --json`, `press/fill/scroll --settle`, `wait text|absent`, `screenshot <path>`, `close`, always with `--session` and `--platform`. It parses JSON (`data.nodes`) or text lines `@e12 [button] label="..."`. The grammar was verified with `agent-device help <cmd>` (0.21.27); **driving a real simulator/emulator was not tested in the sandbox** (no Xcode/KVM). The agent-device web backend requires Node ≥ 24 and downloads Chromium from googlechromelabs (blocked in the sandbox), hence the Playwright adapter for web.
 
-## Co spike potwierdza (i czego nie)
+## What the spike confirms (and what it does not)
 
-Potwierdzone:
-- Kontrakt danych z dokumentacji (TaskContext → ImpactMap → VerificationPlan → Observation/ActionRecord → CriterionVerdict) jest implementowalny i wystarczający.
-- Orakula deterministyczne na drzewie a11y + diff pikselowy względem base dają poprawną macierz werdyktów bez żadnego modelu; sędzia VLM jest potrzebny tylko dla cech wizualnych i tam jest tylko jednym z głosów.
-- Replay semantyczny (rola/nazwa/testID) tych samych kroków na buildzie bazowym działa i daje kontrole negatywne „za darmo”.
-- Raport w formacie komentarza PR (tabela AC → werdykt → orakulum → dowód → pewność, kontrole negatywne, stopka JSON) generuje się z dowodów.
+Confirmed:
+- The data contract from the documentation (TaskContext → ImpactMap → VerificationPlan → Observation/ActionRecord → CriterionVerdict) is implementable and sufficient.
+- Deterministic oracles on the a11y tree plus a pixel diff against base produce the correct verdict matrix without any model; the VLM judge is only needed for visual properties, and even there it is just one of the votes.
+- Semantic replay (role/name/testID) of the same steps on the base build works and yields negative controls "for free".
+- The PR-comment-style report (table AC → verdict → oracle → evidence → confidence, negative controls, JSON footer) is generated from the evidence.
 
-Nie potwierdzone (następne kroki fazy 0):
-1. Jakość i koszt Plannera/Executora/Sędziego z prawdziwym modelem (`bash bench/run.sh --model claude-opus-5-5`); cel: 4/4, ≤ 2 USD/run.
-2. agent-device na iOS Simulator i Android Emulator na Macu (adapter + pomiar czasu bootu).
-3. Bogatszy benchmark: 10 historycznych PR-ów + mutacje, w tym PR bez AC (tryb `diff_driven`) i PR z regresją na innym ekranie (smoke).
-4. Cache kroków między pushami i `handed_off` przy drifcie (dziś replay jest tylko dla base).
+Not confirmed (next steps of phase 0):
+1. Quality and cost of Planner/Executor/Judge with a real model (`bash bench/run.sh --model claude-opus-5-5`); target: 4/4, ≤ 2 USD per run.
+2. agent-device on iOS Simulator and Android Emulator on a Mac (adapter + boot time measurements).
+3. A richer benchmark: 10 historical PRs plus mutations, including a PR without AC (`diff_driven` mode) and a PR with a regression on another screen (smoke).
+4. Step cache between pushes and `handed_off` on drift (today replay exists only for the base build).

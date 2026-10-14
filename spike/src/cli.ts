@@ -17,14 +17,14 @@ const HELP = `revlee-spike verify --context <task_context.json> --url <app url |
 
   --adapter playwright|agent-device   (default: playwright for web, agent-device otherwise)
   --platform web|ios|android          (default: web)
-  --base-url <url|app id>             build bazowy do porównania różnicowego
-  --model mock|claude-opus-5-5|...    (default: $REVLEE_MODEL or claude-opus-5-5; mock = bez LLM)
-  --plan <plan.json>                  gotowy plan (wymagany dla --model mock)
-  --out <dir>                         katalog dowodów (default .revlee-run/<timestamp>)
-  --votes <n>                         głosy sędziego VLM (default 3)
-  --max-usd <n> --max-turns <n>       budżety (default 5 / 60)
-  --headed                            Playwright z oknem
-  --device <id>                       urządzenie dla agent-device (UDID / serial)
+  --base-url <url|app id>             base build for differential comparison
+  --model mock|claude-opus-5-5|...    (default: $REVLEE_MODEL or claude-opus-5-5; mock = no LLM)
+  --plan <plan.json>                  pre-built plan (required for --model mock)
+  --out <dir>                         evidence directory (default .revlee-run/<timestamp>)
+  --votes <n>                         VLM judge votes (default 3)
+  --max-usd <n> --max-turns <n>       budgets (default 5 / 60)
+  --headed                            run Playwright with a visible window
+  --device <id>                       device for agent-device (UDID / serial)
 
 Exit codes: 0 ready/ready_with_issues, 2 failed, 3 unable_to_verify/inconclusive, 1 error.`;
 
@@ -59,8 +59,8 @@ async function main() {
   const plan = await buildPlan(model, ctx, impact, { mockPlanFile: values.plan });
   const warnings = validatePlan(plan, ctx);
   fs.writeFileSync(path.join(outDir, "plan.json"), JSON.stringify(plan, null, 2));
-  log(`plan: ${plan.scenarios.length} scenariuszy, ${plan.claimed_behaviors.length} zachowań, ${plan.cannot_verify_via_ui.length} nieweryfikowalnych${warnings.length ? ` · warnings: ${warnings.join("; ")}` : ""}`);
-  for (const s of plan.scenarios) log(`  ${s.id} ${s.title}: ${s.steps.length} kroków, orakula ${s.oracles.map((o) => `${o.id}:${o.type}`).join(",")}`);
+  log(`plan: ${plan.scenarios.length} scenarios, ${plan.claimed_behaviors.length} behaviors, ${plan.cannot_verify_via_ui.length} not verifiable via UI${warnings.length ? ` · warnings: ${warnings.join("; ")}` : ""}`);
+  for (const s of plan.scenarios) log(`  ${s.id} ${s.title}: ${s.steps.length} steps, oracles ${s.oracles.map((o) => `${o.id}:${o.type}`).join(",")}`);
 
   const mkDevice = (sub: string): DeviceAdapter => {
     const evidenceDir = path.join(outDir, sub);
@@ -76,7 +76,7 @@ async function main() {
       log(`execute ${scenario.id} on PR build`);
       const initial = await device.open(values.url);
       const run = await runScenario(model, device, ctx, scenario, initial, { maxTurns: Number(values["max-turns"]), maxUsd: Number(values["max-usd"]), maxScreenshots: 12, log });
-      log(`  -> ${run.status}${run.blocker ? ` (${run.blocker})` : ""} · ${run.actions.length} akcji · ${run.usd.toFixed(3)} USD`);
+      log(`  -> ${run.status}${run.blocker ? ` (${run.blocker})` : ""} · ${run.actions.length} actions · ${run.usd.toFixed(3)} USD`);
       prRuns.push(run);
     } finally { await device.close(); }
   }

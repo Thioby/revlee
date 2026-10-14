@@ -10,12 +10,12 @@ export interface JudgeOptions { votes: number; evidenceDir: string; log: (s: str
 
 const JudgeOut = z.object({
   verdict: z.enum(["pass", "fail", "inconclusive"]),
-  evidence: z.string().describe("Które obserwacje/elementy to potwierdzają (indeks obrazu, region, tekst)."),
+  evidence: z.string().describe("Which observations/elements prove it (image index, region, text)."),
   unmet_subcriteria: z.array(z.string()),
 });
 
-const JUDGE_SYSTEM = `Jesteś niezależnym sędzią QA. Oceniasz WYŁĄCZNIE załączone obserwacje (screenshoty i drzewa accessibility). Nie znasz i nie potrzebujesz narracji agenta.
-Rozbij kryterium na atomowe podkryteria i oceń każde. Dla verdict=pass musisz wskazać konkretny dowód (który obraz, jaki element/region). Jeśli obserwacje nie wystarczają, odpowiedz inconclusive i napisz, jakiego dowodu brakuje. Nie zakładaj, że akcja się powiodła, bo tak wynikałoby z kolejności obrazów. Odpowiadaj JSON zgodnym ze schematem.`;
+const JUDGE_SYSTEM = `You are an independent QA judge. You evaluate ONLY the attached observations (screenshots and accessibility trees). You do not know and do not need the agent's narration.
+Break the criterion into atomic sub-criteria and evaluate each. For verdict=pass you must cite concrete evidence (which image, which element/region). If the observations are insufficient, answer inconclusive and state what evidence is missing. Do not assume an action succeeded just because the order of images suggests it. Answer with JSON matching the schema.`;
 
 // ---------- deterministic oracles ----------
 export function evalA11y(assert: NonNullable<Oracle["assert"]>, obs: Observation): { ok: boolean; detail: string } {
@@ -56,10 +56,10 @@ async function vlmJudge(model: ModelClient, oracle: Oracle, obs: Observation, pr
   const votes: NonNullable<CriterionVerdict["judge_votes"]> = [];
   const content: any[] = [];
   const push = (label: string, o?: Observation) => { if (o?.screenshotPath) { content.push({ type: "text", text: label }); content.push(imageBlock(fs.readFileSync(o.screenshotPath).toString("base64"))); } };
-  if (prev && prev !== obs) push("Obraz A: ekran PRZED krokiem", prev);
-  push("Obraz B: ekran PO kroku (oceniany)", obs);
-  if (baseObs) push("Obraz C: ten sam krok na buildzie BAZOWYM (przed zmianą)", baseObs);
-  content.push({ type: "text", text: `Drzewo accessibility ekranu B:\n${obs.snapshotText}\n\nKryterium: ${oracle.rubric}\nKontekst zmiany: ${opts.changeIntent}\nOczekiwanie względem buildu bazowego: ${oracle.expected_on_base}` });
+  if (prev && prev !== obs) push("Image A: screen BEFORE the step", prev);
+  push("Image B: screen AFTER the step (under evaluation)", obs);
+  if (baseObs) push("Image C: the same step on the BASE build (before the change)", baseObs);
+  content.push({ type: "text", text: `Accessibility tree of screen B:\n${obs.snapshotText}\n\nCriterion: ${oracle.rubric}\nChange context: ${opts.changeIntent}\nExpectation relative to the base build: ${oracle.expected_on_base}` });
   for (let i = 0; i < opts.votes; i++) {
     try {
       const out = await model.parse({ system: JUDGE_SYSTEM, content, schema: JudgeOut, effort: "medium" });

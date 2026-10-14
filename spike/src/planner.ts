@@ -2,18 +2,18 @@ import fs from "node:fs";
 import { VerificationPlan, type ImpactMap, type TaskContext } from "./types.js";
 import type { ModelClient } from "./model.js";
 
-const SYSTEM = `Jesteś Plannerem systemu Revlee: zamieniasz kontekst pull requesta i zadania na jawny, audytowalny plan weryfikacji wykonywany przez agenta na działającej aplikacji.
+const SYSTEM = `You are the Planner of the Revlee system: you turn the context of a pull request and its task into an explicit, auditable verification plan that an agent executes against the running application.
 
-Twarde reguły:
-1. Diff jest autorytatywny; opis PR jest tylko kontekstem. Nie akceptuj zachowania sprzecznego z kryteriami akceptacji tylko dlatego, że opis PR tak mówi.
-2. Każde claimed_behavior MUSI mieć source_ref wskazujący istniejące kryterium akceptacji (np. "SHOP-412#ac:2"), hunk diffu ("pr:h1") lub linię opisu PR ("pr:body"). Zachowania wyprowadzone z diffu, których nie ma w tickecie, oznacz derived=true.
-3. Każde kryterium akceptacji -> co najmniej jeden scenariusz, albo wpis w cannot_verify_via_ui z powodem.
-4. Kroki scenariusza są w języku naturalnym, niezależne od platformy, bez refów (@e12) i współrzędnych. Maks. 12 kroków. Każdy krok ma expect_after: co ma być widoczne po kroku.
-5. Orakula: preferuj a11y_assert (tekst widoczny/nieobecny, element po testID/roli/nazwie) zawsze gdy cecha jest widoczna w drzewie accessibility. vlm_rubric TYLKO dla cech niewidocznych w drzewie (kolor, układ, wykres). Każde orakulum ma at_step (po którym kroku oceniać) i expected_on_base: "absent" gdy element/tekst nie powinien istnieć na buildzie bazowym, "different" gdy wygląd ma się różnić, "same" gdy nic nie powinno się zmienić.
-6. Każdy scenariusz ma co najmniej jedną kontrolę negatywną (negative_controls): coś, co musi NIE występować (np. tekst toasta przed akcją; brak nowego elementu na buildzie bazowym gdy compare_with_base=true).
-7. Nie planuj akcji destrukcyjnych: płatności, usuwania konta, wysyłania wiadomości, ani niczego, co playbook zakazuje.
-8. Używaj danych testowych i ścieżek nawigacji z playbooka i mapy ekranów.
-Odpowiadaj wyłącznie obiektem JSON zgodnym ze schematem.`;
+Hard rules:
+1. The diff is authoritative; the PR description is context only. Never accept behavior that contradicts the acceptance criteria just because the PR description says so.
+2. Every claimed_behavior MUST have a source_ref pointing to an existing acceptance criterion (e.g. "SHOP-412#ac:2"), a diff hunk ("pr:h1") or a line of the PR description ("pr:body"). Behaviors derived from the diff that are not in the ticket must be marked derived=true.
+3. Every acceptance criterion -> at least one scenario, or an entry in cannot_verify_via_ui with a reason.
+4. Scenario steps are natural language, platform independent, with no refs (@e12) and no coordinates. Max 12 steps. Every step has expect_after: what must be observable after the step.
+5. Oracles: prefer a11y_assert (text visible/absent, element by testID/role/name) whenever the property is visible in the accessibility tree. Use vlm_rubric ONLY for properties invisible in the tree (color, layout, charts). Every oracle has at_step (after which step it is evaluated) and expected_on_base: "absent" when the element/text must not exist on the base build, "different" when the appearance must differ, "same" when nothing should change.
+6. Every scenario has at least one negative control (negative_controls): something that must NOT be present (e.g. the toast text before the action; no new element on the base build when compare_with_base=true).
+7. Never plan destructive actions: payments, account deletion, sending messages, or anything the playbook forbids.
+8. Use test data and navigation paths from the playbook and the screen map.
+Respond only with a JSON object matching the schema.`;
 
 export async function buildPlan(model: ModelClient, ctx: TaskContext, impact: ImpactMap, opts: { mockPlanFile?: string } = {}): Promise<VerificationPlan> {
   if (model.isMock) {
@@ -27,7 +27,7 @@ export async function buildPlan(model: ModelClient, ctx: TaskContext, impact: Im
     "<impact_map>", JSON.stringify(impact, null, 1), "</impact_map>",
     "<playbook>", ctx.repo_knowledge.playbook_md, "</playbook>",
     "<screens>", JSON.stringify(ctx.repo_knowledge.screens), "</screens>",
-    "Zbuduj VerificationPlan. Identyfikatory kryteriów: użyj id z acceptance_criteria (AC1, AC2...). Scenariusze: S1, S2... Orakula: O1, O2... Kontrole negatywne: N1, N2...",
+    "Build the VerificationPlan. Criterion ids: use the ids from acceptance_criteria (AC1, AC2...). Scenarios: S1, S2... Oracles: O1, O2... Negative controls: N1, N2...",
   ].join("\n");
   const plan = await model.parse({ system: SYSTEM, content: [{ type: "text", text: user }], schema: VerificationPlan, effort: "high" });
   validatePlan(plan, ctx);
