@@ -47,3 +47,7 @@ Research źródłowy (5 raportów, ~350 cytowań): [`research_notes/`](research_
 2. **Revyl** to vision-first agent w chmurze z werdyktem w komentarzu; nie czyta ticketów, nie porównuje z base, nie ustawia check runu, nie ma self-hosted ani web.
 3. **Revlee** składa klocki w system z jawnym planem cytującym AC i hunki diffu, hierarchią orakli (deterministyczne asercje a11y → diff pikselowy base vs PR → sędzia VLM z głosowaniem i kontrolami negatywnymi), uczciwym stanem `unable_to_verify`, jednym idempotentnym komentarzem z mediami i check runem, pamięcią o aplikacji (App Map) i cache'em kroków obniżającym koszt kolejnych pushy.
 4. Cele liczbowe: p50 ≤ 10 min, ≤ 2–3 USD na PR, ≤ 3–5 % fałszywych werdyktów na własnym benchu z wstrzykiwanymi błędami.
+
+## Faza 0: spike
+
+Katalog [`spike/`](spike/) zawiera działającą, minimalną pętlę (plan → agent → replay na base → orakula → raport) na Playwright/agent-device z aplikacją testową i mikro-benchmarkiem 4 wariantów. Wynik w trybie bez modelu: 4/4 poprawnych werdyktów, ~12 s na run. Szczegóły i instrukcja uruchomienia z modelem: [`spike/README.md`](spike/README.md).

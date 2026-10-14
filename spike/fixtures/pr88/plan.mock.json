@@ -1,0 +1,34 @@
+{
+  "change_intent": "CTA 'Dodaj do koszyka' zmienia kolor na zielony, po tapnięciu pokazuje toast 'Dodano: <nazwa>' znikający po ~3 s, licznik koszyka rośnie o 1.",
+  "claimed_behaviors": [
+    { "id": "AC1", "text": "CTA jest zielony (#1DB954)", "source_ref": "SHOP-412#ac:1", "derived": false },
+    { "id": "AC2", "text": "Toast 'Dodano: <nazwa>' po tapnięciu, znika po ~3 s", "source_ref": "SHOP-412#ac:2", "derived": false },
+    { "id": "AC3", "text": "Licznik koszyka +1", "source_ref": "SHOP-412#ac:3", "derived": false }
+  ],
+  "scenarios": [
+    {
+      "id": "S1",
+      "title": "Dodanie 'Orchid Mantis' do koszyka pokazuje toast i zwiększa licznik",
+      "covers": ["AC2", "AC3", "AC1"],
+      "preconditions": "Aplikacja otwarta na Home, koszyk pusty",
+      "steps": [
+        { "n": 1, "text": "Przejdź do zakładki Products", "expect_after": "Lista produktów z 'Orchid Mantis' na górze" },
+        { "n": 2, "text": "Otwórz produkt 'Orchid Mantis'", "expect_after": "Ekran produktu z nagłówkiem 'Orchid Mantis' i przyciskiem 'Dodaj do koszyka'" },
+        { "n": 3, "text": "Tapnij przycisk 'Dodaj do koszyka'", "expect_after": "Pojawia się toast 'Dodano: Orchid Mantis', licznik koszyka pokazuje 1" },
+        { "n": 4, "text": "Odczekaj 3,5 sekundy", "expect_after": "Toast zniknął, licznik nadal 1" }
+      ],
+      "oracles": [
+        { "id": "O1", "type": "a11y_assert", "covers": "AC2", "at_step": 3, "assert": { "text_contains": "Dodano: Orchid Mantis", "text_absent": null, "element": null, "element_state": null }, "rubric": null, "expected_on_base": "absent" },
+        { "id": "O2", "type": "a11y_assert", "covers": "AC2", "at_step": 4, "assert": { "text_contains": null, "text_absent": "Dodano:", "element": null, "element_state": null }, "rubric": null, "expected_on_base": "same" },
+        { "id": "O3", "type": "a11y_assert", "covers": "AC3", "at_step": 3, "assert": { "text_contains": null, "text_absent": null, "element": { "role": null, "name_contains": null, "test_id": "cart-badge", "value_equals": "1" }, "element_state": "visible" }, "rubric": null, "expected_on_base": "same" },
+        { "id": "O4", "type": "vlm_rubric", "covers": "AC1", "at_step": 2, "assert": null, "rubric": "Przycisk 'Dodaj do koszyka' jest zielony (odcień zbliżony do #1DB954). Nie jest niebieski ani czerwony.", "expected_on_base": "different" }
+      ],
+      "negative_controls": [
+        { "id": "N1", "text": "Przed tapnięciem nie ma toasta 'Dodano:'", "assert": { "text_contains": null, "text_absent": "Dodano:", "element": null, "element_state": null }, "at_step": 2, "compare_with_base": false },
+        { "id": "N2", "text": "Na buildzie base po tapnięciu nie pojawia się toast", "assert": { "text_contains": null, "text_absent": "Dodano:", "element": null, "element_state": null }, "at_step": 3, "compare_with_base": true }
+      ]
+    }
+  ],
+  "cannot_verify_via_ui": [],
+  "notes": []
+}

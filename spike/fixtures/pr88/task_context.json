@@ -1,0 +1,38 @@
+{
+  "schema": "revlee.task_context/1",
+  "pr": {
+    "number": 88,
+    "title": "Green add-to-cart CTA with confirmation toast",
+    "body_author": "Closes SHOP-412\n\n## Test plan\n- open Products, tap first product, tap 'Dodaj do koszyka', see toast and badge",
+    "head_sha": "c7d9e10",
+    "base_sha": "e4f5a6b",
+    "files": ["sample-app/public/app.js", "sample-app/public/index.html"],
+    "diff_hunks": [
+      { "id": "h1", "path": "sample-app/public/app.js", "patch": "@@ addToCart @@\n-        state.cart.push(p);\n+        state.cart.push(p);\n+        showToast(`Dodano: ${p.name}`);\n         render();" },
+      { "id": "h2", "path": "sample-app/public/index.html", "patch": "@@ theme @@\n-  :root { --primary: #2962ff; }\n+  :root { --primary: #1DB954; }\n+  .toast { position: fixed; left: 16px; right: 16px; bottom: 70px; background: #222; color: #fff; ... }" }
+    ]
+  },
+  "tickets": [
+    {
+      "id": "SHOP-412",
+      "url": "https://acme.atlassian.net/browse/SHOP-412",
+      "title": "Green add-to-cart CTA with confirmation toast",
+      "description_md": "Użytkownik ma dostać wyraźne potwierdzenie dodania produktu do koszyka.",
+      "acceptance_criteria": [
+        { "id": "AC1", "text": "Przycisk 'Dodaj do koszyka' na ekranie produktu jest zielony (odcień zbliżony do #1DB954), nie niebieski", "source_ref": "SHOP-412#ac:1", "kind": "visual" },
+        { "id": "AC2", "text": "Po tapnięciu 'Dodaj do koszyka' pojawia się toast z tekstem 'Dodano: <nazwa produktu>' i znika po ok. 3 sekundach", "source_ref": "SHOP-412#ac:2", "kind": "behavior" },
+        { "id": "AC3", "text": "Licznik koszyka w nagłówku zwiększa się o 1 po dodaniu produktu", "source_ref": "SHOP-412#ac:3", "kind": "state" }
+      ]
+    }
+  ],
+  "repo_knowledge": {
+    "playbook_md": "# Acme Shop (web)\n- Zakładki na dole: Home, Products, Cart, Profile.\n- Produkt 'Orchid Mantis' (62 zł) jest zawsze pierwszy na liście Products.\n- Licznik koszyka: element z testID cart-badge w nagłówku.\n- Nie dotykaj: Profile -> 'Usuń konto'.",
+    "screens": [
+      { "id": "home", "files": [], "entry": [] },
+      { "id": "products", "files": ["sample-app/public/app.js"], "entry": ["tap:Products"] },
+      { "id": "product", "files": ["sample-app/public/app.js"], "entry": ["tap:Products", "tap:first product card"], "title_pattern": "^Product" },
+      { "id": "cart", "files": ["sample-app/public/app.js"], "entry": ["tap:Cart"] }
+    ]
+  },
+  "scope_hint": null
+}

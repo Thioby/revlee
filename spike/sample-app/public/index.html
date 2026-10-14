@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Acme Shop</title>
+<style>
+  :root { --primary: #1DB954; --danger: #d33; --base-primary: #2962ff; }
+  body { font-family: system-ui, sans-serif; margin: 0; background: #fafafa; color: #222; }
+  header { padding: 14px 16px; background: #fff; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center; }
+  h1 { font-size: 18px; margin: 0; }
+  main { padding: 16px; max-width: 480px; margin: 0 auto; min-height: 60vh; }
+  nav.tabs { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: #fff; border-top: 1px solid #e5e5e5; }
+  nav.tabs button { flex: 1; padding: 14px 0; border: 0; background: none; font-size: 14px; }
+  nav.tabs button[aria-current="page"] { font-weight: 700; color: var(--primary); }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 12px; margin-bottom: 10px; cursor: pointer; }
+  .price { color: #666; }
+  button.cta { width: 100%; padding: 14px; border: 0; border-radius: 10px; color: #fff; font-size: 16px; background: var(--primary); }
+  body[data-variant="base"] button.cta { background: var(--base-primary); }
+  body[data-bug~="color"] button.cta { background: var(--base-primary); }
+  .badge { background: var(--danger); color: #fff; border-radius: 999px; padding: 2px 8px; font-size: 12px; margin-left: 6px; }
+  .toast { position: fixed; left: 16px; right: 16px; bottom: 70px; background: #222; color: #fff; padding: 12px 14px; border-radius: 10px; }
+  .hidden { display: none; }
+  .danger { background: var(--danger); color: #fff; border: 0; border-radius: 8px; padding: 8px 12px; }
+  body[data-bug~="theme-leak"] .danger { background: var(--primary); }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="screen-title">Home</h1>
+  <span>Koszyk <span class="badge" data-testid="cart-badge" aria-label="Liczba produktów w koszyku">0</span></span>
+</header>
+<main id="main"></main>
+<div id="toast" class="toast hidden" role="status" aria-live="polite" data-testid="toast"></div>
+<nav class="tabs" aria-label="Zakładki">
+  <button data-tab="home" aria-current="page">Home</button>
+  <button data-tab="products">Products</button>
+  <button data-tab="cart">Cart</button>
+  <button data-tab="profile">Profile</button>
+</nav>
+<script src="app.js"></script>
+</body>
+</html>
