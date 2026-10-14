@@ -60,8 +60,8 @@ app:
     mock_server: null                      # e.g. wiremock mappings dir
 
 devices:
-  android: { api: 35, image: google_apis, arch: x86_64, profile: pixel_7, locale: pl-PL }
-  ios: { model: "iPhone 17", runtime: "iOS-27-0", locale: pl-PL, appearance: light }
+  android: { api: 35, image: google_apis, arch: x86_64, profile: pixel_7, locale: en-US }
+  ios: { model: "iPhone 17", runtime: "iOS-27-0", locale: en-US, appearance: light }
   web: { browser: chromium, viewport: [1280, 800] }
 
 verification:

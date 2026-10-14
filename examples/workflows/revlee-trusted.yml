@@ -1,6 +1,6 @@
-# Wariant prosty: zaufane PR-y z tego samego repozytorium (sekrety dostępne).
-# Fork PR-y są pomijane przez `revlee gate` (triggers.forks: manual) i obsługiwane
-# przez revlee-build.yml + revlee-verify.yml.
+# Simple variant: trusted PRs from the same repository (secrets available).
+# Fork PRs are skipped by `revlee gate` (triggers.forks: manual) and handled
+# by revlee-build.yml + revlee-verify.yml.
 name: revlee
 on:
   pull_request:

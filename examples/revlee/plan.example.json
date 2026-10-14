@@ -1,29 +1,29 @@
 {
   "schema": "revlee.verification_plan/1",
   "plan_id": "pr88-a1b2c3d-android",
-  "change_intent": "Zmienić CTA 'Dodaj do koszyka' na zielony i dodać toast potwierdzenia; licznik koszyka rośnie.",
+  "change_intent": "Change the 'Add to cart' CTA to green and add a confirmation toast; the cart counter increases.",
   "claimed_behaviors": [
     {
       "id": "B1",
-      "text": "CTA ma kolor #1DB954",
+      "text": "The CTA has color #1DB954",
       "source_ref": "SHOP-412#ac:1",
       "kind": "visual"
     },
     {
       "id": "B2",
-      "text": "Toast 'Dodano: {nazwa}' po tapnięciu, znika po 3 s",
+      "text": "Toast 'Added: {name}' after tap, disappears after 3 s",
       "source_ref": "SHOP-412#ac:2",
       "kind": "behavior"
     },
     {
       "id": "B3",
-      "text": "Licznik koszyka +1",
+      "text": "Cart counter +1",
       "source_ref": "SHOP-412#ac:3",
       "kind": "state"
     },
     {
       "id": "B4",
-      "text": "Nowy komponent Toast nie zasłania tab bara",
+      "text": "The new Toast component does not cover the tab bar",
       "source_ref": "pr:h3",
       "kind": "visual",
       "derived": true
@@ -32,7 +32,7 @@
   "scenarios": [
     {
       "id": "S1",
-      "title": "Dodanie produktu do koszyka pokazuje toast i zwiększa licznik",
+      "title": "Adding a product to the cart shows a toast and increases the counter",
       "covers": [
         "B2",
         "B3",
@@ -41,7 +41,7 @@
       "preconditions": {
         "auth": "customer",
         "screen": "product",
-        "data": "produkt 'Orchid Mantis' widoczny",
+        "data": "product 'Orchid Mantis' visible",
         "flags": {
           "newToast": true
         }
@@ -50,13 +50,13 @@
         {
           "n": 1,
           "action": "navigate",
-          "text": "Przejdź do ekranu produktu 'Orchid Mantis'",
-          "expect_after": "widoczny tytuł 'Orchid Mantis' i przycisk 'Dodaj do koszyka'"
+          "text": "Go to the product screen for 'Orchid Mantis'",
+          "expect_after": "title 'Orchid Mantis' and the 'Add to cart' button are visible"
         },
         {
           "n": 2,
           "action": "observe",
-          "text": "Odczytaj licznik koszyka",
+          "text": "Read the cart counter",
           "extract": {
             "name": "cart_before",
             "from": "testID cart-badge"
@@ -65,14 +65,14 @@
         {
           "n": 3,
           "action": "tap",
-          "text": "Tapnij 'Dodaj do koszyka'",
-          "expect_after": "pojawia się toast 'Dodano: Orchid Mantis'"
+          "text": "Tap 'Add to cart'",
+          "expect_after": "the toast 'Added: Orchid Mantis' appears"
         },
         {
           "n": 4,
           "action": "wait",
-          "text": "Odczekaj 3,5 s",
-          "expect_after": "toast zniknął"
+          "text": "Wait 3.5 s",
+          "expect_after": "the toast has disappeared"
         }
       ],
       "oracles": [
@@ -81,7 +81,7 @@
           "type": "a11y_assert",
           "covers": "B2",
           "assert": {
-            "text_contains": "Dodano: Orchid Mantis"
+            "text_contains": "Added: Orchid Mantis"
           },
           "at_step": 3,
           "expected_on_base": "absent"
@@ -91,7 +91,7 @@
           "type": "a11y_assert",
           "covers": "B2",
           "assert": {
-            "text_absent": "Dodano:"
+            "text_absent": "Added:"
           },
           "at_step": 4,
           "expected_on_base": "same"
@@ -111,7 +111,7 @@
           "id": "O4",
           "type": "vlm_rubric",
           "covers": "B4",
-          "rubric": "Toast nie nachodzi na dolny pasek zakładek; wszystkie 3 ikony zakładek w pełni widoczne",
+          "rubric": "The toast does not overlap the bottom tab bar; all 3 tab icons are fully visible",
           "vision": "required",
           "at_step": 3,
           "expected_on_base": "absent"
@@ -120,12 +120,12 @@
       "negative_controls": [
         {
           "id": "N1",
-          "text": "Na buildzie base po tapnięciu nie pojawia się żaden toast",
+          "text": "On the base build no toast appears after the tap",
           "compare_with_base": true
         },
         {
           "id": "N2",
-          "text": "Licznik nie rośnie o więcej niż 1",
+          "text": "The counter does not increase by more than 1",
           "assert": {
             "test_id": "cart-badge",
             "value_not": "${cart_before + 2}"
@@ -140,7 +140,7 @@
     },
     {
       "id": "S2",
-      "title": "Kolor CTA",
+      "title": "CTA color",
       "covers": [
         "B1"
       ],
@@ -151,8 +151,8 @@
         {
           "n": 1,
           "action": "navigate",
-          "text": "Ekran produktu",
-          "expect_after": "przycisk 'Dodaj do koszyka' widoczny"
+          "text": "Product screen",
+          "expect_after": "the 'Add to cart' button is visible"
         }
       ],
       "oracles": [
@@ -170,7 +170,7 @@
           "id": "O6",
           "type": "vlm_rubric",
           "covers": "B1",
-          "rubric": "Przycisk 'Dodaj do koszyka' jest zielony (odcień zbliżony do #1DB954), nie niebieski ani czerwony",
+          "rubric": "The 'Add to cart' button is green (a shade close to #1DB954), not blue or red",
           "vision": "required",
           "votes": 3,
           "expected_on_base": "different"
@@ -179,7 +179,7 @@
       "negative_controls": [
         {
           "id": "N3",
-          "text": "Na base przycisk nie jest zielony",
+          "text": "On base the button is not green",
           "compare_with_base": true
         }
       ],
@@ -205,7 +205,7 @@
   "always_verify": [
     {
       "id": "AV1",
-      "text": "Aplikacja startuje do ekranu Home bez crasha",
+      "text": "The app launches to the Home screen without crashing",
       "oracle": "a11y_assert"
     }
   ],

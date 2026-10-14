@@ -9,7 +9,7 @@ screens:
     routes: ["Products"]
     entry: ["tap:tab Products"]
   - id: product
-    title_pattern: "^(Produkt|Product)"
+    title_pattern: "^Product"
     files: ["apps/mobile/src/screens/ProductScreen.tsx", "apps/mobile/src/components/AddToCart*.tsx"]
     routes: ["Product"]
     entry: ["tap:tab Products", "tap:first product card"]

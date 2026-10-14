@@ -1,4 +1,4 @@
-# Minimalna konfiguracja startowa (Expo/React Native + Jira). Pełny schemat: docs/12-konfiguracja-cli-ux.md
+# Minimal starter configuration (Expo/React Native + Jira). Full schema: docs/12-configuration-cli-ux.md
 version: 1
 project:
   name: acme-shop
@@ -33,11 +33,11 @@ app:
   reset_between_scenarios: deep_link
   network: { mode: allowlist, allowed_hosts: ["api-test.acme.dev", "cdn.acme.dev"] }
 devices:
-  android: { api: 35, image: google_apis, arch: x86_64, profile: pixel_7, locale: pl-PL }
-  ios: { model: "iPhone 17", runtime: "iOS-27-0", locale: pl-PL }
+  android: { api: 35, image: google_apis, arch: x86_64, profile: pixel_7, locale: en-US }
+  ios: { model: "iPhone 17", runtime: "iOS-27-0", locale: en-US }
 verification:
   always_verify:
-    - "Aplikacja startuje do ekranu Home bez crasha"
+    - "The app launches to the Home screen without crashing"
   base_comparison: true
   max_scenarios: 8
 oracles:
@@ -51,5 +51,5 @@ report:
   check_run: { enabled: true, gating: neutral }
   evidence: { store: s3, bucket: acme-revlee-evidence, public_base_url: https://evidence.acme.dev, retention_days: 30 }
 security:
-  deny_actions: ["zapłać", "pay", "usuń konto", "delete account"]
+  deny_actions: ["pay", "delete account"]
   allowed_link_schemes: ["acme://"]

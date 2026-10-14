@@ -1,4 +1,4 @@
-# Regiony pomijane w diffie pikselowym base vs PR (współrzędne względne 0–1 lub selektory a11y)
+# Regions ignored in the base vs PR pixel diff (relative coordinates 0–1 or a11y selectors)
 global:
   - { name: status-bar, rect: [0, 0, 1, 0.05] }
   - { name: clock-or-dynamic-text, selector: 'role=text name~="\\d{1,2}:\\d{2}"' }

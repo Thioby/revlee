@@ -1,53 +1,53 @@
 # Revlee
 
-**Otwarty, self-hosted system agentowej weryfikacji pull requestów.** Agent AI czyta PR *i* powiązane zadanie (GitHub Issue / Jira / Linear), buduje jawny plan weryfikacji, uruchamia aplikację zbudowaną z PR-a na Twoim sprzęcie (iOS Simulator, Android Emulator, web), porównuje ją z gałęzią bazową i publikuje w GitHubie werdykt z dowodami: screenshotami, wideo, drzewami accessibility i tabelą „kryterium → dowód”.
+**An open, self-hosted system for agentic verification of pull requests.** An AI agent reads the PR *and* the linked task (GitHub Issue / Jira / Linear), builds an explicit verification plan, runs the application built from the PR on your own hardware (iOS Simulator, Android Emulator, web), compares it with the base branch, and publishes a verdict with evidence in GitHub: screenshots, video, accessibility trees, and a "criterion → evidence" table.
 
-Cel: system co najmniej równoważny [Revyl](https://revyl.com), działający na własnych runnerach GitHub Actions, w pełni open source, i lepszy tam, gdzie Revyl ma luki (kontekst ticketa, porównanie base vs PR, hierarchia orakli zamiast samego osądu VLM, check run, web, dowolne modele).
+Goal: a system at least equivalent to [Revyl](https://revyl.com), running on your own GitHub Actions runners, fully open source, and better where Revyl has gaps (ticket context, base vs PR comparison, an oracle hierarchy instead of VLM judgment alone, check run, web, any models).
 
-> Status: **dokumentacja projektowa** (faza koncepcji). Repozytorium zawiera pełną specyfikację systemu i notatki z researchu; kod powstanie według roadmapy w [docs/13](docs/13-roadmapa-i-ryzyka.md).
+> Status: **design documentation plus a phase-0 spike**. The repository contains the full system specification, research notes, and a working minimal loop in [`spike/`](spike/); further code follows the roadmap in [docs/13](docs/13-roadmap-and-risks.md).
 
-## Jak to działa w jednym obrazku
+## How it works in one picture
 
 ```mermaid
 flowchart LR
-  PR[PR + ticket] --> CTX[Kontekst] --> IMP[Analiza wpływu<br/>diff → ekrany] --> PLAN[Plan: AC → scenariusze → orakula]
-  PLAN --> EXEC[Agent steruje appką<br/>a11y-first, cache/replay]
-  BUILD[Build PR + base] --> DEV[(Urządzenie<br/>iOS · Android · web)]
+  PR[PR + ticket] --> CTX[Context] --> IMP[Impact analysis<br/>diff → screens] --> PLAN[Plan: AC → scenarios → oracles]
+  PLAN --> EXEC[Agent drives the app<br/>a11y-first, cache/replay]
+  BUILD[Build PR + base] --> DEV[(Device<br/>iOS · Android · web)]
   EXEC <--> DEV
-  EXEC --> JUDGE[Orakula + sędzia<br/>deterministyczne > diff > VLM ×3]
-  JUDGE --> REP[Komentarz PR + check run<br/>+ wideo, screenshoty, JUnit]
+  EXEC --> JUDGE[Oracles + judge<br/>deterministic > diff > VLM ×3]
+  JUDGE --> REP[PR comment + check run<br/>+ video, screenshots, JUnit]
 ```
 
-## Dokumentacja
+## Documentation
 
-| # | Rozdział | Treść |
+| # | Chapter | Contents |
 |---|---|---|
-| 01 | [Wizja i cele](docs/01-wizja-i-cele.md) | Problem, cele, zasady projektowe, zakres MVP vs docelowy |
-| 02 | [Research i stan rynku](docs/02-research-i-stan-rynku.md) | Jak działa Revyl, co istnieje w OSS, klocki do użycia, gdzie można być lepszym |
-| 03 | [Architektura](docs/03-architektura.md) | Komponenty, topologia, stos technologiczny, granice zaufania |
-| 04 | [Przepływ PR → werdykt](docs/04-przeplyw-pr-do-werdyktu.md) | Sekwencja, fazy, maszyna stanów, werdykty, komendy `/verify` |
-| 05 | [Kontekst PR-a i zadania](docs/05-kontekst-pr-i-zadania.md) | Źródła kontekstu, rozwiązywanie ticketów, ekstrakcja AC, `TaskContext`, sanityzacja |
-| 06 | [Plan weryfikacji](docs/06-plan-weryfikacji.md) | Impact Analyzer, Planner, schemat `VerificationPlan`, walidacja planu |
-| 07 | [Warstwa urządzeń i buildów](docs/07-warstwa-urzadzen-i-buildow.md) | Build Service, serwer MCP `revlee-device`, adaptery iOS/Android/web, evidence store |
-| 08 | [Agent, orakula i sędzia](docs/08-agent-wykonawczy-i-orakula.md) | Pętla agenta, cache/replay, hierarchia orakli, sędzia odporny na fałszywe pass, base vs PR |
-| 09 | [Raport i GitHub](docs/09-raport-i-integracja-github.md) | Układ komentarza, check run, media, `report.html`, komendy |
-| 10 | [Bezpieczeństwo, koszty, limity](docs/10-bezpieczenstwo-koszty-limity.md) | Model zagrożeń, forki, hard controls, model kosztu |
-| 11 | [Infrastruktura self-hosted](docs/11-infrastruktura-self-hosted.md) | Pule Mac (Tart/Cilicon) i Linux (ARC/KVM), cache, sieć, budżet czasu |
-| 12 | [Konfiguracja, CLI, UX](docs/12-konfiguracja-cli-ux.md) | Pełny schemat `.revlee/config.yaml`, komendy CLI, MCP, workflow, doświadczenie developera |
-| 13 | [Roadmapa i ryzyka](docs/13-roadmapa-i-ryzyka.md) | Fazy 0–3, metryki sukcesu, ryzyka, decyzje otwarte |
-| 14 | [Decyzje (ADR) i źródła](docs/14-decyzje-i-zrodla.md) | Rejestr decyzji, słownik, bibliografia |
+| 01 | [Vision and goals](docs/01-vision-and-goals.md) | Problem, goals, design principles, MVP vs target scope |
+| 02 | [Research and market landscape](docs/02-research-and-landscape.md) | How Revyl works, what exists in OSS, building blocks to use, where we can be better |
+| 03 | [Architecture](docs/03-architecture.md) | Components, topology, technology stack, trust boundaries |
+| 04 | [Flow PR → verdict](docs/04-flow-pr-to-verdict.md) | Sequence, phases, state machine, verdicts, `/verify` commands |
+| 05 | [PR and task context](docs/05-pr-and-task-context.md) | Context sources, ticket resolution, AC extraction, `TaskContext`, sanitization |
+| 06 | [Verification plan](docs/06-verification-plan.md) | Impact Analyzer, Planner, `VerificationPlan` schema, plan validation |
+| 07 | [Device and build layer](docs/07-device-and-build-layer.md) | Build Service, `revlee-device` MCP server, iOS/Android/web adapters, evidence store |
+| 08 | [Agent, oracles, and judge](docs/08-executor-agent-and-oracles.md) | Agent loop, cache/replay, oracle hierarchy, a judge resistant to false passes, base vs PR |
+| 09 | [Report and GitHub](docs/09-report-and-github-integration.md) | Comment layout, check run, media, `report.html`, commands |
+| 10 | [Security, costs, limits](docs/10-security-costs-limits.md) | Threat model, forks, hard controls, cost model |
+| 11 | [Self-hosted infrastructure](docs/11-self-hosted-infrastructure.md) | Mac (Tart/Cilicon) and Linux (ARC/KVM) pools, cache, network, time budget |
+| 12 | [Configuration, CLI, UX](docs/12-configuration-cli-ux.md) | Full `.revlee/config.yaml` schema, CLI commands, MCP, workflow, developer experience |
+| 13 | [Roadmap and risks](docs/13-roadmap-and-risks.md) | Phases 0–3, success metrics, risks, open decisions |
+| 14 | [Decisions (ADR) and sources](docs/14-decisions-and-sources.md) | Decision register, glossary, bibliography |
 
-Przykłady: [`examples/workflows/`](examples/workflows/) (GitHub Actions dla zaufanych PR-ów i forków), [`examples/revlee/`](examples/revlee/) (`config.yaml`, `playbook.md`, `screens.yaml`, `ignore-regions.yaml`, `plan.example.json`), [`examples/pr-comment.md`](examples/pr-comment.md) (docelowy wygląd komentarza).
+Examples: [`examples/workflows/`](examples/workflows/) (GitHub Actions for trusted PRs and forks), [`examples/revlee/`](examples/revlee/) (`config.yaml`, `playbook.md`, `screens.yaml`, `ignore-regions.yaml`, `plan.example.json`), [`examples/pr-comment.md`](examples/pr-comment.md) (target look of the comment).
 
-Research źródłowy (5 raportów, ~350 cytowań): [`research_notes/`](research_notes/Agentowa%20weryfikacja%20PR%20jak%20Revyl/).
+Source research (5 reports, ~350 citations): [`research_notes/`](research_notes/agentic-pr-verification-vs-revyl/).
 
-## Najkrótsze streszczenie
+## The shortest summary
 
-1. **Nie istnieje** gotowy OSS, który robi pełną pętlę „ticket + diff → plan → aplikacja na urządzeniu → dowody w PR”. Istnieją dojrzałe klocki: `callstack/agent-device` (sterowanie iOS/Android a11y-first, dowody, replay `.ad`), Playwright, `tester-army/e2e` (cache kroków agenta), Claude Agent SDK / `claude-code-action` (agent w CI z gatingiem narzędzi), `odiff`, Tart/Cilicon i ARC (ephemeral runnery).
-2. **Revyl** to vision-first agent w chmurze z werdyktem w komentarzu; nie czyta ticketów, nie porównuje z base, nie ustawia check runu, nie ma self-hosted ani web.
-3. **Revlee** składa klocki w system z jawnym planem cytującym AC i hunki diffu, hierarchią orakli (deterministyczne asercje a11y → diff pikselowy base vs PR → sędzia VLM z głosowaniem i kontrolami negatywnymi), uczciwym stanem `unable_to_verify`, jednym idempotentnym komentarzem z mediami i check runem, pamięcią o aplikacji (App Map) i cache'em kroków obniżającym koszt kolejnych pushy.
-4. Cele liczbowe: p50 ≤ 10 min, ≤ 2–3 USD na PR, ≤ 3–5 % fałszywych werdyktów na własnym benchu z wstrzykiwanymi błędami.
+1. **No** ready-made OSS exists that does the full loop "ticket + diff → plan → app on a device → evidence in the PR". Mature building blocks exist: `callstack/agent-device` (a11y-first iOS/Android control, evidence, `.ad` replay), Playwright, `tester-army/e2e` (agent step cache), Claude Agent SDK / `claude-code-action` (agent in CI with tool gating), `odiff`, Tart/Cilicon and ARC (ephemeral runners).
+2. **Revyl** is a vision-first agent in the cloud with a verdict in a comment; it does not read tickets, does not compare with base, does not set a check run, has no self-hosted option and no web.
+3. **Revlee** assembles the building blocks into a system with an explicit plan citing AC and diff hunks, an oracle hierarchy (deterministic a11y assertions → pixel diff base vs PR → VLM judge with voting and negative controls), an honest `unable_to_verify` state, a single idempotent comment with media and a check run, memory of the application (App Map), and a step cache that lowers the cost of subsequent pushes.
+4. Numerical goals: p50 ≤ 10 min, ≤ 2–3 USD per PR, ≤ 3–5 % false verdicts on our own bench with injected bugs.
 
-## Faza 0: spike
+## Phase 0: spike
 
-Katalog [`spike/`](spike/) zawiera działającą, minimalną pętlę (plan → agent → replay na base → orakula → raport) na Playwright/agent-device z aplikacją testową i mikro-benchmarkiem 4 wariantów. Wynik w trybie bez modelu: 4/4 poprawnych werdyktów, ~12 s na run. Szczegóły i instrukcja uruchomienia z modelem: [`spike/README.md`](spike/README.md).
+The [`spike/`](spike/) directory contains a working, minimal loop (plan → agent → replay on base → oracles → report) on Playwright/agent-device with a test application and a micro-benchmark of 4 variants. Result in model-less mode: 4/4 correct verdicts, ~12 s per run. Details and instructions for running with a model: [`spike/README.md`](spike/README.md).

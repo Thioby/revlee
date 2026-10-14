@@ -41,9 +41,9 @@ If more than one ticket is found, all of them go into the context and the Planne
 ### 2.2 Acceptance criteria extraction
 
 Deterministic heuristics (before the LLM):
-- headings `Acceptance criteria|Kryteria akceptacji|AC|Definition of done`,
+- headings `Acceptance criteria|AC|Definition of done` (localized synonyms configurable via `context.ac_heading_patterns`),
 - `- [ ]` / `- [x]` / numbered lists under those headings,
-- Gherkin (`Given/When/Then`, `Zakładając/Gdy/Wtedy`) anywhere in the text,
+- Gherkin (`Given/When/Then`, localized keywords configurable) anywhere in the text,
 - Jira custom fields.
 
 Then an LLM (the `models.planner` model, cheap) normalizes them into an `acceptance_criteria[]` list, preserving the original text and a `source_ref` (URL + line/position number). The model **must not add** a criterion without a source; it may only propose `derived_checks[]` marked as derived.
@@ -147,7 +147,7 @@ Example `screens.yaml`:
 ```yaml
 screens:
   - id: product
-    title_pattern: "^(Produkt|Product)"
+    title_pattern: "^Product"
     files: ["src/screens/ProductScreen.tsx", "src/components/AddToCart*.tsx"]
     routes: ["Product"]            # React Navigation route names
     entry: ["home", "tap:tab Products", "tap:first product card"]

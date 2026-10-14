@@ -1,5 +1,5 @@
-# Krok 2/2 dla PR-ów z forków: weryfikacja w kontekście gałęzi bazowej (sekrety),
-# tylko po `/verify` od osoby z write access. Kod forka NIE jest checkoutowany.
+# Step 2/2 for PRs from forks: verification in the context of the base branch (secrets),
+# only after `/verify` from a person with write access. The fork's code is NOT checked out.
 name: revlee-verify
 on:
   issue_comment:
@@ -32,7 +32,7 @@ jobs:
       REVLEE_APP_PRIVATE_KEY: ${{ secrets.REVLEE_APP_PRIVATE_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v6        # gałąź bazowa: konfiguracja security/budget
+      - uses: actions/checkout@v6        # base branch: security/budget configuration
       - name: Fetch fork build artifact matching current PR head
         run: npx -y @revlee/cli@1 artifact fetch --pr ${{ github.event.issue.number }} --platform android --workflow revlee-build --out build/
       - name: Verify

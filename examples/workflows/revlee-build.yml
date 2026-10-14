@@ -1,4 +1,4 @@
-# Krok 1/2 dla PR-ów z forków: build BEZ sekretów na ephemeral runnerze.
+# Step 1/2 for PRs from forks: build WITHOUT secrets on an ephemeral runner.
 name: revlee-build
 on:
   pull_request:
